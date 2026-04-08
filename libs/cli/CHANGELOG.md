@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.36](https://github.com/langchain-ai/deepagents/compare/deepagents-cli==0.0.35...deepagents-cli==0.0.36) (2026-04-08)
+
+
+### Features
+
+* **cli:** warn on missing tavily key, add `/notifications` ([#2555](https://github.com/langchain-ai/deepagents/issues/2555)) ([3dff3ed](https://github.com/langchain-ai/deepagents/commit/3dff3ed6835eae9f8b420b8a73c054127faaf7d2))
+
+
+### Bug Fixes
+
+* **cli:** fail fast on missing provider credentials ([#2554](https://github.com/langchain-ai/deepagents/issues/2554)) ([50fb8ae](https://github.com/langchain-ai/deepagents/commit/50fb8aefe7e3065024e10f1d5ecd11a54d736641))
+
 ## [0.0.35](https://github.com/langchain-ai/deepagents/compare/deepagents-cli==0.0.34...deepagents-cli==0.0.35) (2026-04-07)
 
 ### Highlights
