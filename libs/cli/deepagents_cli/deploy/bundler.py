@@ -26,6 +26,7 @@ from deepagents_cli.deploy.config import (
     MCP_FILENAME,
     SKILLS_DIRNAME,
     DeployConfig,
+    extract_provider,
 )
 from deepagents_cli.deploy.templates import (
     DEPLOY_GRAPH_TEMPLATE,
@@ -36,13 +37,24 @@ from deepagents_cli.deploy.templates import (
 
 logger = logging.getLogger(__name__)
 
-_MODEL_PROVIDER_DEPS = {
+_MODEL_PROVIDER_DEPS: dict[str, str] = {
     "anthropic": "langchain-anthropic",
-    "openai": "langchain-openai",
+    "azure_openai": "langchain-openai",
+    "baseten": "langchain-baseten",
+    "bedrock": "langchain-aws",
+    "cohere": "langchain-cohere",
+    "deepseek": "langchain-deepseek",
+    "fireworks": "langchain-fireworks",
     "google_genai": "langchain-google-genai",
     "google_vertexai": "langchain-google-vertexai",
     "groq": "langchain-groq",
     "mistralai": "langchain-mistralai",
+    "nvidia": "langchain-nvidia-ai-endpoints",
+    "openai": "langchain-openai",
+    "openrouter": "langchain-openrouter",
+    "perplexity": "langchain-perplexity",
+    "together": "langchain-together",
+    "xai": "langchain-xai",
 }
 """Dependencies inferred from a provider: prefix on the model string."""
 
@@ -205,9 +217,7 @@ def _render_pyproject(config: DeployConfig, *, mcp_present: bool) -> str:
     """
     deps: list[str] = []
 
-    provider_prefix = (
-        config.agent.model.split(":", 1)[0] if ":" in config.agent.model else ""
-    )
+    provider_prefix = extract_provider(config.agent.model)
     if provider_prefix and provider_prefix in _MODEL_PROVIDER_DEPS:
         deps.append(_MODEL_PROVIDER_DEPS[provider_prefix])
 

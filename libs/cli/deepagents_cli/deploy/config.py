@@ -239,23 +239,24 @@ def _parse_config(data: dict[str, Any]) -> DeployConfig:
     return DeployConfig(agent=agent, sandbox=sandbox)
 
 
-_MODEL_PROVIDER_ENV: dict[str, str] = {
+_MODEL_PROVIDER_ENV: dict[str, str | list[str]] = {
     "anthropic": "ANTHROPIC_API_KEY",
-    "openai": "OPENAI_API_KEY",
-    "google_genai": "GOOGLE_API_KEY",
-    "google_vertexai": "GOOGLE_CLOUD_PROJECT",
     "azure_openai": "AZURE_OPENAI_API_KEY",
-    "groq": "GROQ_API_KEY",
-    "mistralai": "MISTRAL_API_KEY",
-    "fireworks": "FIREWORKS_API_KEY",
     "baseten": "BASETEN_API_KEY",
-    "together": "TOGETHER_API_KEY",
-    "xai": "XAI_API_KEY",
-    "nvidia": "NVIDIA_API_KEY",
+    "bedrock": ["AWS_ACCESS_KEY_ID", "AWS_PROFILE", "AWS_ROLE_ARN"],
     "cohere": "COHERE_API_KEY",
     "deepseek": "DEEPSEEK_API_KEY",
+    "fireworks": "FIREWORKS_API_KEY",
+    "google_genai": "GOOGLE_API_KEY",
+    "google_vertexai": "GOOGLE_CLOUD_PROJECT",
+    "groq": "GROQ_API_KEY",
+    "mistralai": "MISTRAL_API_KEY",
+    "nvidia": "NVIDIA_API_KEY",
+    "openai": "OPENAI_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
     "perplexity": "PPLX_API_KEY",
+    "together": "TOGETHER_API_KEY",
+    "xai": "XAI_API_KEY",
 }
 
 _SANDBOX_PROVIDER_ENV: dict[str, list[str]] = {
@@ -270,20 +271,40 @@ _SANDBOX_PROVIDER_ENV: dict[str, list[str]] = {
 }
 
 
+def extract_provider(model: str) -> str:
+    """Extract and normalize the provider prefix from a model string.
+
+    Returns the lowercased, stripped provider prefix, or ``""`` if the
+    model string contains no colon.
+    """
+    if ":" not in model:
+        return ""
+    return model.split(":", 1)[0].strip().lower()
+
+
 def _validate_model_credentials(model: str) -> list[str]:
     """Check that the API key env var is set for the model provider."""
-    if ":" not in model:
+    provider = extract_provider(model)
+    if not provider:
         return []
-    provider = model.split(":", 1)[0]
-    env_var = _MODEL_PROVIDER_ENV.get(provider)
-    if env_var is None:
+    env_entry = _MODEL_PROVIDER_ENV.get(provider)
+    if env_entry is None:
+        return [
+            (
+                f"Unknown model provider {provider!r}. "
+                f"Valid providers: {', '.join(sorted(_MODEL_PROVIDER_ENV))}"
+            ),
+        ]
+    # Some providers accept multiple auth methods (e.g. bedrock supports
+    # access keys, profiles, and IAM roles).  Any one being set is enough.
+    env_vars = env_entry if isinstance(env_entry, list) else [env_entry]
+    if any(os.environ.get(v) for v in env_vars):
         return []
-    if os.environ.get(env_var):
-        return []
+    hint = env_vars[0] if len(env_vars) == 1 else f"one of {', '.join(env_vars)}"
     return [
         (
             f"Missing API key for model provider '{provider}': "
-            f"set {env_var} in your .env file or environment."
+            f"set {hint} in your .env file or environment."
         ),
     ]
 
